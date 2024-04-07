@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Server edit and delete</title>
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
+
+<body>
+    <div class="content-container">
+        <h1 class="title">Assignment 17</h1>
+        <h2 class="subtitle">Server edit and delete</h2>
+
+        <button onclick="document.getElementById('addCrafts').style.display='block'" id="addEle"
+            class="w3-button w3-black">Add a
+            crafts</button>
+
+        <div id="addCrafts" class="w3-modal" style="display: none;">
+            <div class="w3-modal-content">
+                <header class="w3-container w3-teal">
+                    <span onclick="document.getElementById('addCrafts').style.display='none'"
+                        class="w3-button w3-display-topright">×</span>
+                    <h2>Make Changes to your Craft</h2>
+                </header>
+                <div class="w3-container modal-content" id="demo1">
+                    <form id="craftForm">
+                        <div class="imageUpload">
+                            <label for="image">Image:</label>
+                            <img id="preview" src="" alt="Image preview" style="display: none;">
+                            <input type="file" id="image" onchange="handleImageChange(event)" name="image"
+                                accept="image/*" required>
+                        </div>
+                        <div class="contentCreate">
+                            <div>
+                                <label for="name">Name:</label>
+                                <input type="text" id="name" name="name" required="">
+                            </div>
+                            <div>
+                                <label for="description">Description:</label>
+                                <input type="text" id="description" name="description" required="">
+                            </div>
+                            <div>
+                                <label for="supplies">Supplies:</label>
+                                <div id="supplies">
+                                    <input type="text" name="supplies" required="">
+                                </div>
+                            </div>
+                            <div>
+                                <button type="button" id="addSupply" onclick="handleAddSupplyClick()">Add
+                                    supply</button>
+                                <button type="button" onclick="addRecord()">Save</button>
+                                <button type="button" id="cancelAddCrafts"
+                                    onclick="handleCancelAddCraftsClick()">Cancel</button>
+
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div id="tree-container" class="tree-container"></div>
+
+    <script src="/js/trees.js"></script>
+    <script>
+        displayTrees();
+        addModalListeners();
+        // document.getElementById('addSupply').addEventListener('click', addSupply);
+    </script>
+    <script>
+        async function addRecord() {
+            var form = document.getElementById('craftForm');
+            var formData = new FormData(form);
+            for (var pair of formData.entries()) {
+                console.log(pair[0] + ', ' + pair[1]);
+            }
+
+            var data = new FormData();
+            data.append('file', formData.get('image'));
+            data.append('name', formData.get('name'));
+            data.append('description', formData.get('description'));
+            data.append('supplies', JSON.stringify(formData.getAll('supplies')));
+
+            try {
+                const response = await fetch('/api/crafts', {
+                    method: 'POST',
+                    body: data
+                });
+
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+
+                const responseData = await response.text();
+                console.log('Record and file added to the database:', responseData);
+                window.location.reload();
+            } catch (error) {
+                console.error('There has been a problem with your fetch operation:', error);
+            }
+        }
+        function handleImageChange(event) {
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                document.getElementById('preview').src = e.target.result;
+                document.getElementById('preview').style.display = 'block';
+            };
+            reader.readAsDataURL(event.target.files[0]);
+        }
+
+        function handleAddSupplyClick() {
+            var input = document.createElement('input');
+            input.type = 'text';
+            input.name = 'supplies';
+            input.required = true;
+            document.getElementById('supplies').appendChild(input);
+        }
+
+        function handleCancelAddCraftsClick() {
+            var supplies = document.getElementById('supplies');
+            while (supplies.firstChild) {
+                supplies.removeChild(supplies.firstChild);
+            }
+            handleAddSupplyClick();
+
+            document.getElementById('addCrafts').style.display = 'none';
+            document.getElementById('craftForm').reset();
+            document.getElementById('preview').style.display = 'none';
+        }
+    </script>
+
+</body>
+
+</html>
